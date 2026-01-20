@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-node-api-user1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-node-api-user1
+  template:
+    metadata:
+      labels:
+        app: devops-node-api-user1
+    spec:
+      containers:
+        - name: devops-node-api-user1
+          image: bhav55/devops-node-api-user1:latest
+          ports:
+            - containerPort: 4000
+          env:
+            - name: NODE_ENV
+              value: "production"
