@@ -13,6 +13,7 @@ RUN npm install --only=production
 # Step 5: Copy application code
 COPY . .
 
+
 # Step 6: Expose application port
 EXPOSE 4000
 
