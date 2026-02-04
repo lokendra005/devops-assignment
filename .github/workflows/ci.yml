@@ -68,11 +68,12 @@ jobs:
 
       # 9. Trivy image scan
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}
-          severity: CRITICAL
-          exit-code: 1
+          severity: 'CRITICAL'
+          exit-code: '1'
+          format: 'table'
 
       # 10. Login to DockerHub
       - name: Login to DockerHub
