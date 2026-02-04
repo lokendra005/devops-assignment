@@ -10,55 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 3. Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # 4. Run ESLint (Quality Gate)
       - name: Run lint checks
         run: npm run lint
 
-      # 5. Run unit tests
-      # DB not required here
       - name: Run tests
         run: npm test
 
-      # 🔥 6. Setup Docker Buildx (THIS WAS MISSING)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Setup DockerHub environment variables
         run: |
-          # Sanitize username by removing any newlines or carriage returns
           CLEAN_USER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr -d '\r\n')
           echo "DOCKERHUB_USERNAME=$CLEAN_USER" >> $GITHUB_ENV
           echo "DOCKER_IMAGE=$CLEAN_USER/devops-node-api-user1:latest" >> $GITHUB_ENV
 
-      - name: Debug DockerHub username
-        run: |
-          if [ -z "$DOCKERHUB_USERNAME" ]; then
-            echo "❌ DOCKERHUB_USERNAME is EMPTY"
-            exit 1
-          else
-            echo "✅ DOCKERHUB_USERNAME is SET"
-          fi
-
-      # 7. Build Docker image
       - name: Build Docker image
-        run: |
-          docker build -t "$DOCKER_IMAGE" .
+        run: docker build -t "$DOCKER_IMAGE" .
 
-      # 8. Container runtime validation
       - name: Run container health check
         run: |
           docker run -d -p 4000:4000 --name test-container "$DOCKER_IMAGE"
@@ -66,22 +46,20 @@ jobs:
           curl -f http://localhost:4000/health
           docker rm -f test-container
 
-      # 9. Trivy image scan
+      # 🔒 Security scan
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ env.DOCKER_IMAGE }}
-          severity: 'CRITICAL'
+          severity: 'HIGH,CRITICAL'
           exit-code: 1
+          format: 'table'
 
-      # 10. Login to DockerHub
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 11. Push trusted image
       - name: Push Docker image
-        run: |
-          docker push "$DOCKER_IMAGE"
+        run: docker push "$DOCKER_IMAGE"

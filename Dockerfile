@@ -1,21 +1,22 @@
-# Step 1: Base image
-FROM node:18-alpine
+FROM node:20-alpine
 
-# Step 2: Set working directory
 WORKDIR /app
 
-# Step 3: Copy dependency files first (layer caching)
+# Create non-root user for security
+RUN addgroup -S app && adduser -S app -G app
+
+# Copy only package files first (better caching)
 COPY package*.json ./
 
-# Step 4: Install dependencies
-RUN npm install --only=production
+# Install only production dependencies, reproducible
+RUN npm ci --omit=dev
 
-# Step 5: Copy application code
+# Copy rest of the app
 COPY . .
 
+# Switch to non-root user
+USER app
 
-# Step 6: Expose application port
 EXPOSE 4000
 
-# Step 7: Start the app
 CMD ["node", "server.js"]
